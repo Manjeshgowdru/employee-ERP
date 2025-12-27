@@ -1,0 +1,373 @@
+{
+  "name": "Add Employee - MVP (with duplicate check)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "add-employee"
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [200, 300]
+    },
+    {
+      "parameters": {
+        "requestMethod": "GET",
+        "url": "={{$env.SUPABASE_URL}}/rest/v1/employees?select=id&email=eq.{{$json[\"email\"]}}",
+        "options": {
+          "headers": {
+            "Authorization": "Bearer {{$env.SUPABASE_SERVICE_ROLE_KEY}}",
+            "Content-Type": "application/json",
+            "Prefer": "return=representation"
+          }
+        }
+      },
+      "name": "Check Duplicate",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [420, 200]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $node[\"Check Duplicate\"].json.length }}",
+              "operation": "larger",
+              "value2": 0
+            }
+          ]
+        }
+      },
+      "name": "If Duplicate",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [620, 200]
+    },
+    {
+      "parameters": {
+        "requestMethod": "POST",
+        "url": "={{$env.SUPABASE_URL}}/rest/v1/employees",
+        "options": {
+          "headers": {
+            "Authorization": "Bearer {{$env.SUPABASE_SERVICE_ROLE_KEY}}",
+            "Content-Type": "application/json",
+            "Prefer": "return=representation"
+          }
+        },
+        "bodyParametersJson": "={{ $json }}"
+      },
+      "name": "Create Employee",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [840, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "const created = $node[\"Create Employee\"].json[0] || $node[\"Create Employee\"].json;\nconst id = created && created.id ? created.id : ($json && $json.id) || null;\nreturn [{ json: { employee_id: id, date: new Date().toISOString().slice(0,10), status: 'pending' } }];"
+      },
+      "name": "Prepare Attendance",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1060, 300]
+    },
+    {
+      "parameters": {
+        "requestMethod": "POST",
+        "url": "={{$env.SUPABASE_URL}}/rest/v1/attendance",
+        "options": {
+          "headers": {
+            "Authorization": "Bearer {{$env.SUPABASE_SERVICE_ROLE_KEY}}",
+            "Content-Type": "application/json",
+            "Prefer": "return=representation"
+          }
+        },
+        "bodyParametersJson": "={{ $json }}"
+      },
+      "name": "Create Attendance",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [1280, 300]
+    },
+    {
+      "parameters": {
+        "responseCode": 409,
+        "responseBody": "={\"success\":false,\"error\":\"duplicate\"}"
+      },
+      "name": "Respond Duplicate",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [860, 120]
+    },
+    {
+      "parameters": {
+        "responseCode": 201,
+        "responseBody": "={\"success\":true,\"employee_id\": \"{{$node[\"Create Employee\"].json[0].id}}\", \"attendance_id\": \"{{$node[\"Create Attendance\"].json[0].id}}\" }"
+      },
+      "name": "Respond Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1480, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Check Duplicate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Duplicate": {
+      "main": [
+        [
+          {
+            "node": "If Duplicate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Duplicate": {
+      "main": [
+        [
+          {
+            "node": "Respond Duplicate",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create Employee",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Employee": {
+      "main": [
+        [
+          {
+            "node": "Prepare Attendance",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Attendance": {
+      "main": [
+        [
+          {
+            "node": "Create Attendance",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Attendance": {
+      "main": [
+        [
+          {
+            "node": "Respond Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
+{
+  "name": "Add Employee - MVP",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "add-employee"
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "requestMethod": "POST",
+        "url": "={{$env.SUPABASE_URL}}/rest/v1/employees",
+        "options": {
+          "headers": {
+            "Authorization": "Bearer {{$env.SUPABASE_SERVICE_ROLE_KEY}}",
+            "Content-Type": "application/json",
+            "Prefer": "return=representation"
+          }
+        },
+        "bodyParametersJson": "={{ $json }}"
+      },
+      "name": "Create Employee",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "const created = $node[\"Create Employee\"].json[0] || $node[\"Create Employee\"].json;\nconst id = created && created.id ? created.id : ($json && $json.id) || null;\nreturn [{ json: { employee_id: id, date: new Date().toISOString().slice(0,10), status: 'pending' } }];"
+      },
+      "name": "Prepare Attendance",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "requestMethod": "POST",
+        "url": "={{$env.SUPABASE_URL}}/rest/v1/attendance",
+        "options": {
+          "headers": {
+            "Authorization": "Bearer {{$env.SUPABASE_SERVICE_ROLE_KEY}}",
+            "Content-Type": "application/json",
+            "Prefer": "return=representation"
+          }
+        },
+        "bodyParametersJson": "={{ $json }}"
+      },
+      "name": "Create Attendance",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [850, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Create Employee",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Employee": {
+      "main": [
+        [
+          {
+            "node": "Prepare Attendance",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Attendance": {
+      "main": [
+        [
+          {
+            "node": "Create Attendance",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
+{
+	"name": "Add Employee - MVP",
+	"nodes": [
+		{
+			"parameters": {
+				"httpMethod": "POST",
+				"path": "add-employee"
+			},
+			"name": "Webhook",
+			"type": "n8n-nodes-base.webhook",
+			"typeVersion": 1,
+			"position": [250, 300]
+		},
+		{
+			"parameters": {
+				"requestMethod": "POST",
+				"url": "={{$env.SUPABASE_URL}}/rest/v1/employees",
+				"options": {
+					"headers": {
+						"Authorization": "Bearer {{$env.SUPABASE_SERVICE_ROLE_KEY}}",
+						"Content-Type": "application/json",
+						"Prefer": "return=representation"
+					}
+				},
+				"bodyParametersJson": "={{ $json }}"
+			},
+			"name": "Create Employee",
+			"type": "n8n-nodes-base.httpRequest",
+			"typeVersion": 1,
+			"position": [500, 300]
+		},
+		{
+			"parameters": {
+				"requestMethod": "POST",
+				"url": "={{$env.SUPABASE_URL}}/rest/v1/attendance",
+				"options": {
+					"headers": {
+						"Authorization": "Bearer {{$env.SUPABASE_SERVICE_ROLE_KEY}}",
+						"Content-Type": "application/json",
+						"Prefer": "return=representation"
+					}
+				},
+				"bodyParametersJson": "={{ $json }}"
+			},
+			"name": "Create Attendance",
+			"type": "n8n-nodes-base.httpRequest",
+			"typeVersion": 1,
+			"position": [750, 300]
+		}
+	],
+	"connections": {
+		"Webhook": {
+			"main": [
+				[
+					{
+						"node": "Create Employee",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Create Employee": {
+			"main": [
+				[
+					{
+			"Create Employee": {
+				"main": [
+					[
+						{
+							"node": "Prepare Attendance",
+							"type": "main",
+							"index": 0
+						}
+					]
+				]
+			},
+			"Prepare Attendance": {
+				"main": [
+					[
+						{
+							"node": "Create Attendance",
+							"type": "main",
+							"index": 0
+						}
+					]
+				]
+			}
+

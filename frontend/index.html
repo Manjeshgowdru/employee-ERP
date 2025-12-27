@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Employee-ERP — Demo</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main>
+    <h1>Employee-ERP — Add Employee (Demo)</h1>
+
+    <section id="form-section">
+      <form id="employee-form">
+        <label>First name <input name="first_name" required /></label>
+        <label>Last name <input name="last_name" /></label>
+        <label>Email <input name="email" type="email" required /></label>
+        <label>Start date <input name="start_date" type="date" /></label>
+        <div class="row">
+          <button type="submit">Add Employee</button>
+          <button type="button" id="view-employees">View Employees</button>
+        </div>
+      </form>
+
+      <div id="form-status" class="muted"></div>
+    </section>
+
+    <section id="list-section">
+      <h2>Employees</h2>
+      <div id="employees-list">No data loaded.</div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
