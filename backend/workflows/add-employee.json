@@ -14,12 +14,11 @@
     {
       "parameters": {
         "requestMethod": "GET",
-        "url": "={{$env.SUPABASE_URL}}/rest/v1/employees?select=id&email=eq.{{$json[\"email\"]}}",
+        "url": "={{$env.SUPABASE_URL}}/rest/v1/employees?select=id&email=eq.{{$json.email}}",
         "options": {
           "headers": {
             "Authorization": "Bearer {{$env.SUPABASE_SERVICE_ROLE_KEY}}",
-            "Content-Type": "application/json",
-            "Prefer": "return=representation"
+            "Content-Type": "application/json"
           }
         }
       },
@@ -33,7 +32,7 @@
         "conditions": {
           "number": [
             {
-              "value1": "={{ $node[\"Check Duplicate\"].json.length }}",
+              "value1": "={{$json.length}}",
               "operation": "larger",
               "value2": 0
             }
@@ -66,7 +65,7 @@
             "Prefer": "return=representation"
           }
         },
-        "bodyParametersJson": "={{ $json }}"
+        "bodyParametersJson": "={{$json}}"
       },
       "name": "Create Employee",
       "type": "n8n-nodes-base.httpRequest",
@@ -75,7 +74,7 @@
     },
     {
       "parameters": {
-        "functionCode": "const created = $node[\"Create Employee\"].json[0] || $node[\"Create Employee\"].json;\nconst id = created?.id || null;\nreturn [{ json: { employee_id: id, date: new Date().toISOString().slice(0,10), status: 'pending' } }];"
+        "functionCode": "const created = $node['Create Employee'].json[0];\nreturn [{ json: { employee_id: created.id, date: new Date().toISOString().slice(0,10), status: 'pending' } }];"
       },
       "name": "Prepare Attendance",
       "type": "n8n-nodes-base.function",
@@ -93,7 +92,7 @@
             "Prefer": "return=representation"
           }
         },
-        "bodyParametersJson": "={{ $json }}"
+        "bodyParametersJson": "={{$json}}"
       },
       "name": "Create Attendance",
       "type": "n8n-nodes-base.httpRequest",
@@ -135,5 +134,3 @@
     }
   }
 }
-
-
