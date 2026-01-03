@@ -1,3 +1,5 @@
+**START HERE: For step-by-step deployment instructions, please read the `QUICK_STEPS.md` file.**
+
 # Employee-ERP (Automation-first MVP)
 
 Purpose
